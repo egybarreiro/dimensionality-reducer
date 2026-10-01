@@ -1,0 +1,52 @@
+{
+    "ciudades": [
+        "San Juan",
+        "Tokyo",
+        "Chicago",
+        "Tokio"
+    ],
+    "vuelos": [
+        {
+            "origen": "Tokyo",
+            "destino": "San Juan",
+            "costo": 319
+        },
+        {
+            "origen": "Tokyo",
+            "destino": "San Juan",
+            "costo": 149
+        },
+        {
+            "origen": "Tokyo",
+            "destino": "San Juan",
+            "costo": 500
+        },
+        {
+            "origen": "Chicago",
+            "destino": "San Juan",
+            "costo": 157
+        },
+        {
+            "origen": "Chicago",
+            "destino": "San Juan",
+            "costo": 199
+        },
+        {
+            "origen": "Chicago",
+            "destino": "Tokyo",
+            "costo": 371
+        },
+        {
+            "origen": "Tokio",
+            "destino": "Chicago",
+            "costo": 476
+        },
+        {
+            "origen": "Tokio",
+            "destino": "San Juan",
+            "costo": 409
+        }
+    ],
+    "origen": null,
+    "destino": null
+}

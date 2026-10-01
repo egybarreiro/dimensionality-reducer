@@ -1,0 +1,48 @@
+{
+    "customers": [
+        {
+            "customer_id": 1,
+            "name": "Juan Rodriguez",
+            "phone": "787-555-1234",
+            "email": "juan.rodriguez@email.com",
+            "customer_type": "Individual"
+        },
+        {
+            "customer_id": 2,
+            "name": "Rodriguez Transport LLC",
+            "phone": "787-555-5678",
+            "email": "contact@rodrigueztransport.com",
+            "customer_type": "Commercial"
+        }
+    ],
+    "vehicles": [
+        {
+            "make": "Honda",
+            "model": "Accord",
+            "year": 2020,
+            "color": "Black",
+            "mileage": 45000,
+            "vin": "1HGCM82633A004352",
+            "license_plate": "ABC123",
+            "usage_type": "Personal"
+        },
+        {
+            "make": "Ford",
+            "model": "F150",
+            "year": 2021,
+            "color": "White",
+            "mileage": 60000,
+            "vin": "1FTFW1E50MFA12345",
+            "license_plate": "XYZ789",
+            "usage_type": "Commercial"
+        }
+    ],
+    "repair_orders": [
+        {
+            "repair_order_number": "RO-0001",
+            "customer_id": 1,
+            "vin": "1HGCM82633A004352",
+            "status": "Opened"
+        }
+    ]
+}
