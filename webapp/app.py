@@ -80,6 +80,8 @@ def process():
         MAX_ROWS = 5000
         if len(df) > MAX_ROWS:
             df = df.sample(MAX_ROWS, random_state=42)
+            print("SHAPE FINAL:", df.shape)
+
 
         # Ejecutar el reducer
         result = run_reducer(df, method)
