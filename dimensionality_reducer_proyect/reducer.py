@@ -8,7 +8,6 @@ from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 import umap.umap_ as umap
 
 
-
 class DimensionalityReducer:
     def __init__(self, data, normalize=False):
         self.data = data.values if hasattr(data, "values") else data
@@ -70,3 +69,34 @@ class DimensionalityReducer:
         ax.set_ylabel("Componente 2")
 
         return fig
+
+
+# -----------------------------
+# WRAPPER PARA FLASK
+# -----------------------------
+def run_reducer(df, method):
+    """
+    Wrapper para ejecutar el método correcto según el nombre recibido desde Flask.
+    """
+    reducer = DimensionalityReducer(df)
+
+    if method == "pca":
+        reducer.reduce_with_pca()
+    elif method == "tsne":
+        reducer.reduce_with_tsne()
+    elif method == "umap":
+        reducer.reduce_with_umap()
+    elif method == "lda":
+        # Para LDA, asumimos que la última columna es la etiqueta
+        labels = df.iloc[:, -1]
+        reducer.reduce_with_lda(labels)
+    else:
+        raise ValueError(f"Unknown reduction method: {method}")
+
+    # Generar figura
+    fig = reducer.plot_reduction()
+
+    return {
+        "method": method.upper(),
+        "figure": fig
+    }
