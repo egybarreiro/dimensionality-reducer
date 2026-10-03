@@ -77,11 +77,12 @@ def process():
         df = df.dropna()
 
         # Limitar filas para Render Free
-        MAX_ROWS = 5000
+        MAX_ROWS = 1000
         if len(df) > MAX_ROWS:
             df = df.sample(MAX_ROWS, random_state=42)
-            print("SHAPE FINAL:", df.shape)
 
+        # 🔥 DEBUG: imprimir shape final SIEMPRE
+        print("SHAPE FINAL:", df.shape)
 
         # Ejecutar el reducer
         result = run_reducer(df, method)
