@@ -1,15 +1,49 @@
-﻿import os
+﻿import importlib.util
+import os
 import sys
+import types
 from pathlib import Path
 
 import pandas as pd
 from flask import Flask, render_template, request
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
+APP_DIR = Path(__file__).resolve().parent
+for import_root in (PROJECT_ROOT, APP_DIR):
+    if str(import_root) not in sys.path:
+        sys.path.insert(0, str(import_root))
 
-from dimensionality_reducer.reducer import run_reducer  # pyright: ignore[reportMissingImports]
+
+def _load_run_reducer():
+    package_name = "dimensionality_reducer"
+    candidates = (
+        PROJECT_ROOT / package_name / "reducer.py",
+        APP_DIR / package_name / "reducer.py",
+    )
+
+    for reducer_path in candidates:
+        if reducer_path.exists():
+            package = sys.modules.get(package_name)
+            if package is None:
+                package = types.ModuleType(package_name)
+                package.__path__ = [str(reducer_path.parent)]
+                sys.modules[package_name] = package
+
+            spec = importlib.util.spec_from_file_location(
+                f"{package_name}.reducer", reducer_path
+            )
+            if spec is None or spec.loader is None:
+                continue
+
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[spec.name] = module
+            spec.loader.exec_module(module)
+            return module.run_reducer
+
+    raise ImportError(f"Could not resolve {package_name}.reducer")
+
+
+run_reducer = _load_run_reducer()
 
 app = Flask(__name__)
 
