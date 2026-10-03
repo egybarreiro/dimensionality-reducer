@@ -6,7 +6,7 @@ import argparse
 
 import pandas as pd
 
-from dimensionality_reducer import DimensionalityReducer
+from src.dimensionality_reducer.reducer import DimensionalityReducer
 
 
 def main():

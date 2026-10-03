@@ -52,4 +52,4 @@ if uploaded_file is not None:
             if reduced_data is not None:
                 reducer.plot_reduced_data(reduced_data, target)
 
-st.markdown("Repositorio en GitHub: [Repositorio](https://github.com/tu_usuario/tu_repositorio)")
+st.markdown("Repositorio en GitHub: [Repositorio](https://github.com/egybarreiro/dimensionality-reducer)")
