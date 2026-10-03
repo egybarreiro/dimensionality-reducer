@@ -1,0 +1,20 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+
+# Data folders (raw or generated)
+data/
+dimensionality_reducer_proyect/data/
+
+# CSV outputs
+*.csv
+
+# Streamlit cache
+streamlit_app/__pycache__/
+
+# OS junk
+.DS_Store
+Thumbs.db
