@@ -70,7 +70,13 @@ def process():
         # Leer CSV
         df = pd.read_csv(file.stream)
 
-        # 🔥 LIMITAR dataset para Render Free
+        # Convertir solo columnas numéricas
+        df = df.select_dtypes(include=["number"])
+
+        # Eliminar filas con NaN
+        df = df.dropna()
+
+        # Limitar filas para Render Free
         MAX_ROWS = 5000
         if len(df) > MAX_ROWS:
             df = df.sample(MAX_ROWS, random_state=42)
