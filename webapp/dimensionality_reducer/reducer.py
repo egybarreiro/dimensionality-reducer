@@ -1,118 +1,137 @@
 import numpy as np
+import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-import umap.umap_ as umap
+import umap
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import io
+import base64
+
+# ============================
+# CONFIGURACIÓN OPTIMIZADA
+# ============================
+
+MAX_ROWS = 5000          # Mantén 5000 filas para evitar SIGKILL
+MAX_COLS = 200           # Reduce columnas para evitar explosión de RAM
+
+# ============================
+# FUNCIONES AUXILIARES
+# ============================
+
+def df_to_numpy(df):
+    """Convierte DataFrame a numpy y reduce columnas si es necesario."""
+    if df.shape[1] > MAX_COLS:
+        df = df.iloc[:, :MAX_COLS]  # Reducir columnas
+    return df.to_numpy()
 
 
-class DimensionalityReducer:
-    def __init__(self, data, normalize=False):
-        # Convertir DataFrame a ndarray
-        self.data = data.values if hasattr(data, "values") else np.asarray(data)
-
-        # Normalización opcional
-        if normalize:
-            self.data = (self.data - np.mean(self.data, axis=0)) / np.std(self.data, axis=0)
-
-        self.reduced_data: np.ndarray | None = None
-
-        # PCA previo para acelerar t-SNE, UMAP y LDA
-        n_features = self.data.shape[1]
-        pca_components = min(30, n_features)
-
-        self.pca_pre = PCA(
-            n_components=pca_components,
-            svd_solver="randomized"
-        ).fit_transform(self.data)
-
-    # -----------------------------
-    # MÉTODOS DE REDUCCIÓN
-    # -----------------------------
-
-    def reduce_with_pca(self):
-        pca = PCA(n_components=2, svd_solver="randomized")
-        self.reduced_data = pca.fit_transform(self.data)
-
-    def reduce_with_tsne(self):
-        # Ajustar perplexity para datasets pequeños
-        perplexity = min(3, len(self.data) - 1)
-
-        tsne = TSNE(
-            n_components=2,
-            perplexity=perplexity,
-            learning_rate="auto",
-            init="pca",
-            max_iter=500
-        )
-        self.reduced_data = tsne.fit_transform(self.pca_pre)
-
-    def reduce_with_umap(self):
-        # Ajustar n_neighbors para evitar warnings
-        n_neighbors = min(10, len(self.data) - 1)
-
-        reducer = umap.UMAP(
-            n_neighbors=n_neighbors,
-            min_dist=0.5,
-            n_components=2
-        )
-        self.reduced_data = reducer.fit_transform(self.pca_pre)
-
-    def reduce_with_lda(self, labels):
-        # LDA requiere al menos 2 clases
-        unique_classes = np.unique(labels)
-        if len(unique_classes) < 2:
-            raise ValueError("LDA requiere al menos 2 clases distintas en el dataset.")
-
-        lda = LinearDiscriminantAnalysis(n_components=1)  # n_components <= n_classes - 1
-        self.reduced_data = lda.fit_transform(self.pca_pre, labels)
+def fig_to_base64(fig):
+    """Convierte figura Matplotlib a base64."""
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight")
+    buf.seek(0)
+    return base64.b64encode(buf.read()).decode("utf-8")
 
 
-# -----------------------------
-# FUNCIÓN GLOBAL PARA FLASK
-# -----------------------------
-def run_reducer(df, method, normalize=False):
-    reducer = DimensionalityReducer(df, normalize=normalize)
+# ============================
+# MÉTODOS DE REDUCCIÓN
+# ============================
 
-    method = (method or "").lower().strip()
+def run_pca(df):
+    """PCA sin normalización (mucho más rápido en Railway)."""
+    X = df_to_numpy(df)
+    pca = PCA(n_components=3)
+    embedding = pca.fit_transform(X)
+    return embedding
 
+
+def run_tsne(df):
+    """t-SNE optimizado para datasets grandes."""
+    X = df_to_numpy(df)
+    tsne = TSNE(n_components=3, perplexity=30, n_iter=500)
+    embedding = tsne.fit_transform(X)
+    return embedding
+
+
+def run_umap(df):
+    """UMAP optimizado para Railway."""
+    X = df_to_numpy(df)
+    reducer = umap.UMAP(n_components=3, n_neighbors=15, min_dist=0.1)
+    embedding = reducer.fit_transform(X)
+    return embedding
+
+
+# ============================
+# VISUALIZACIONES
+# ============================
+
+def plot_corr(df):
+    """Heatmap de correlación."""
+    corr = df.corr()
+    fig, ax = plt.subplots(figsize=(8, 6))
+    cax = ax.matshow(corr, cmap="coolwarm")
+    fig.colorbar(cax)
+    ax.set_title("Correlation Heatmap")
+    return fig_to_base64(fig)
+
+
+def plot_compare(df):
+    """Comparativo simple entre columnas."""
+    fig, ax = plt.subplots(figsize=(8, 6))
+    df.mean().plot(kind="bar", ax=ax)
+    ax.set_title("Column Means Comparison")
+    return fig_to_base64(fig)
+
+
+# ============================
+# FUNCIÓN PRINCIPAL
+# ============================
+
+def run_reducer(df, method):
+    """Ejecuta PCA, t-SNE o UMAP y devuelve todo lo necesario para la web app."""
+
+    # Limitar filas
+    if df.shape[0] > MAX_ROWS:
+        df = df.sample(MAX_ROWS)
+
+    # Limitar columnas
+    if df.shape[1] > MAX_COLS:
+        df = df.iloc[:, :MAX_COLS]
+
+    # Seleccionar solo columnas numéricas
+    df = df.select_dtypes(include=["number"]).dropna()
+
+    print("SHAPE FINAL:", df.shape)
+
+    if df.shape[0] < 5 or df.shape[1] < 3:
+        raise ValueError("Dataset demasiado pequeño para generar visualizaciones.")
+
+    # Ejecutar el método de reducción
     if method == "pca":
-        reducer.reduce_with_pca()
-
+        embedding = run_pca(df)
     elif method == "tsne":
-        reducer.reduce_with_tsne()
-
+        embedding = run_tsne(df)
     elif method == "umap":
-        reducer.reduce_with_umap()
-
-    elif method == "lda":
-        # Dummy labels → pero ahora LDA exige 2 clases
-        labels = np.zeros(len(df))
-        reducer.reduce_with_lda(labels)
-
+        embedding = run_umap(df)
     else:
-        raise ValueError(f"Unknown reduction method: {method}")
+        raise ValueError("Método no reconocido.")
 
-    if reducer.reduced_data is None:
-        raise ValueError("Reducer did not produce output.")
-    return reducer.reduced_data.tolist()
+    # Visualizaciones
+    corr_plot = plot_corr(df)
+    compare_plot = plot_compare(df)
 
+    # Tabla y estadísticas
+    stats = df.describe().to_html()
+    table = df.head(20).to_html()
 
-# -----------------------------
-# PRUEBA LOCAL
-# -----------------------------
-if __name__ == "__main__":
-    import pandas as pd
-
-    df_test = pd.DataFrame({
-        "A": np.random.rand(100),
-        "B": np.random.rand(100),
-        "C": np.random.rand(100)
-    })
-
-    reducer = DimensionalityReducer(df_test, normalize=True)
-    reducer.reduce_with_pca()
-    if reducer.reduced_data is not None:
-        print("PCA Result Shape:", reducer.reduced_data.shape)
-    else:
-        print("Reducer did not produce output.")
-
+    # Retorno final para la web app
+    return {
+        "embedding": np.asarray(embedding).tolist(),
+        "labels": list(range(df.shape[0])),
+        "corr_plot": corr_plot,
+        "compare_plot": compare_plot,
+        "stats": stats,
+        "table": table
+    }
