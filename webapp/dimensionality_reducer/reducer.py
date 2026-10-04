@@ -3,27 +3,29 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 import umap
-import matplotlib
-matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import seaborn as sns
 import io
 import base64
 
 # ============================
-# CONFIGURACIÓN OPTIMIZADA
+# CONFIGURACIÓN PARA RAILWAY FREE
 # ============================
 
-MAX_ROWS = 5000          # Mantén 5000 filas para evitar SIGKILL
-MAX_COLS = 200           # Reduce columnas para evitar explosión de RAM
+MAX_ROWS = 3000     # Reduce carga para PCA, TSNE, UMAP
+MAX_COLS = 100      # Reduce SVD y nearest neighbors
 
 # ============================
-# FUNCIONES AUXILIARES
+# UTILIDADES
 # ============================
 
 def df_to_numpy(df):
-    """Convierte DataFrame a numpy y reduce columnas si es necesario."""
-    if df.shape[1] > MAX_COLS:
-        df = df.iloc[:, :MAX_COLS]  # Reducir columnas
+    """Convierte DataFrame a numpy y aplica límites."""
+    df = df.select_dtypes(include=[np.number])
+
+    # Limitar filas y columnas
+    df = df.iloc[:MAX_ROWS, :MAX_COLS]
+
     return df.to_numpy()
 
 
@@ -36,53 +38,66 @@ def fig_to_base64(fig):
 
 
 # ============================
-# MÉTODOS DE REDUCCIÓN
+# PCA
 # ============================
 
 def run_pca(df):
-    """PCA sin normalización (mucho más rápido en Railway)."""
     X = df_to_numpy(df)
+
     pca = PCA(n_components=3)
     embedding = pca.fit_transform(X)
-    return embedding
 
+    # ====== Gráfico de correlación ======
+    fig1, ax1 = plt.subplots(figsize=(6, 5))
+    sns.heatmap(df.corr(), cmap="coolwarm", ax=ax1)
+    corr_plot = fig_to_base64(fig1)
+    plt.close(fig1)
+
+    # ====== Gráfico comparativo ======
+    fig2, ax2 = plt.subplots(figsize=(6, 5))
+    df.iloc[:, :5].plot(kind="line", ax=ax2)
+    compare_plot = fig_to_base64(fig2)
+    plt.close(fig2)
+
+    # ====== Estadísticas ======
+    stats_html = df.describe().to_html()
+
+    # ====== Tabla ======
+    table_html = df.head(20).to_html()
+
+    return embedding, corr_plot, compare_plot, stats_html, table_html
+
+
+# ============================
+# t-SNE
+# ============================
 
 def run_tsne(df):
-    """t-SNE optimizado para datasets grandes."""
     X = df_to_numpy(df)
+
     tsne = TSNE(n_components=3, perplexity=30, n_iter=500)
     embedding = tsne.fit_transform(X)
+
     return embedding
 
+
+# ============================
+# UMAP (modo sin Numba para Railway)
+# ============================
 
 def run_umap(df):
-    """UMAP optimizado para Railway."""
     X = df_to_numpy(df)
-    reducer = umap.UMAP(n_components=3, n_neighbors=15, min_dist=0.1)
+
+    reducer = umap.UMAP(
+        n_components=3,
+        n_neighbors=10,
+        min_dist=0.1,
+        low_memory=True,
+        force_approximation_algorithm=True
+    )
+
     embedding = reducer.fit_transform(X)
     return embedding
-
-
-# ============================
-# VISUALIZACIONES
-# ============================
-
-def plot_corr(df):
-    """Heatmap de correlación."""
-    corr = df.corr()
-    fig, ax = plt.subplots(figsize=(8, 6))
-    cax = ax.matshow(corr, cmap="coolwarm")
-    fig.colorbar(cax)
-    ax.set_title("Correlation Heatmap")
-    return fig_to_base64(fig)
-
-
-def plot_compare(df):
-    """Comparativo simple entre columnas."""
-    fig, ax = plt.subplots(figsize=(8, 6))
-    df.mean().plot(kind="bar", ax=ax)
-    ax.set_title("Column Means Comparison")
-    return fig_to_base64(fig)
 
 
 # ============================
@@ -90,46 +105,34 @@ def plot_compare(df):
 # ============================
 
 def run_reducer(df, method):
-    """Ejecuta PCA, t-SNE o UMAP y devuelve todo lo necesario para la web app."""
+    """Ejecuta el método y devuelve JSON uniforme para el frontend."""
 
-    # Limitar filas
-    if df.shape[0] > MAX_ROWS:
-        df = df.sample(MAX_ROWS)
-
-    # Limitar columnas
-    if df.shape[1] > MAX_COLS:
-        df = df.iloc[:, :MAX_COLS]
-
-    # Seleccionar solo columnas numéricas
-    df = df.select_dtypes(include=["number"]).dropna()
-
-    print("SHAPE FINAL:", df.shape)
-
-    if df.shape[0] < 5 or df.shape[1] < 3:
-        raise ValueError("Dataset demasiado pequeño para generar visualizaciones.")
-
-    # Ejecutar el método de reducción
     if method == "pca":
-        embedding = run_pca(df)
+        embedding, corr_plot, compare_plot, stats, table = run_pca(df)
+
     elif method == "tsne":
         embedding = run_tsne(df)
+        corr_plot = ""
+        compare_plot = ""
+        stats = ""
+        table = ""
+
     elif method == "umap":
         embedding = run_umap(df)
+        corr_plot = ""
+        compare_plot = ""
+        stats = ""
+        table = ""
+
     else:
-        raise ValueError("Método no reconocido.")
+        raise ValueError("Método inválido")
 
-    # Visualizaciones
-    corr_plot = plot_corr(df)
-    compare_plot = plot_compare(df)
+    # Respuesta uniforme para evitar errores en el frontend
+    toarray = getattr(embedding, "toarray", None)
+    embedding_array = toarray() if callable(toarray) else embedding
 
-    # Tabla y estadísticas
-    stats = df.describe().to_html()
-    table = df.head(20).to_html()
-
-    # Retorno final para la web app
     return {
-        "embedding": np.asarray(embedding).tolist(),
-        "labels": list(range(df.shape[0])),
+        "embedding": np.asarray(embedding_array).tolist(),
         "corr_plot": corr_plot,
         "compare_plot": compare_plot,
         "stats": stats,
