@@ -19,7 +19,9 @@
         <section class="card">
             <h2>Configurar experimento</h2>
 
+            <!-- FORMULARIO -->
             <form id="upload-form" enctype="multipart/form-data">
+
                 <div class="form-group">
                     <label>Archivo CSV:</label>
                     <input type="file" name="file" id="file-input" required>
@@ -41,10 +43,14 @@
                     </label>
                 </div>
 
-                <button type="submit" class="button primary">Ejecutar</button>
+                <button type="submit" class="button primary" id="run-btn">
+                    Ejecutar
+                </button>
+
             </form>
         </section>
 
+        <!-- RESULTADOS -->
         <section class="card" id="results" style="display:none;">
             <h2>Resultados</h2>
 
@@ -64,38 +70,62 @@
     </main>
 </div>
 
+<!-- SCRIPT FUNCIONAL -->
 <script>
-document.getElementById("upload-form").addEventListener("submit", async function(e) {
-    e.preventDefault();
+document.addEventListener("DOMContentLoaded", function () {
 
+    const form = document.getElementById("upload-form");
     const fileInput = document.getElementById("file-input");
-    const method = document.getElementById("method-select").value;
-    const normalize = document.getElementById("normalize-checkbox").checked;
+    const methodSelect = document.getElementById("method-select");
+    const normalizeCheckbox = document.getElementById("normalize-checkbox");
 
-    const formData = new FormData();
-    formData.append("file", fileInput.files[0]);
-    formData.append("method", method);
-    formData.append("normalize", normalize ? "true" : "false");
-
-    const response = await fetch("/process", {
-        method: "POST",
-        body: formData
-    });
-
-    const data = await response.json();
-
-    if (data.error) {
-        alert("Error: " + data.error);
+    if (!form) {
+        alert("Error crítico: formulario no encontrado.");
         return;
     }
 
-    document.getElementById("results").style.display = "block";
+    form.addEventListener("submit", async function(e) {
+        e.preventDefault();
 
-    document.getElementById("corr-img").src = "data:image/png;base64," + data.corr_plot;
-    document.getElementById("compare-img").src = "data:image/png;base64," + data.compare_plot;
+        if (!fileInput.files.length) {
+            alert("Selecciona un archivo CSV primero.");
+            return;
+        }
 
-    document.getElementById("stats").innerHTML = data.stats;
-    document.getElementById("table").innerHTML = data.table;
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        formData.append("method", methodSelect.value);
+        formData.append("normalize", normalizeCheckbox.checked ? "true" : "false");
+
+        try {
+            const response = await fetch("/process", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert("Error: " + data.error);
+                return;
+            }
+
+            document.getElementById("results").style.display = "block";
+
+            document.getElementById("corr-img").src =
+                "data:image/png;base64," + data.corr_plot;
+
+            document.getElementById("compare-img").src =
+                "data:image/png;base64," + data.compare_plot;
+
+            document.getElementById("stats").innerHTML = data.stats;
+            document.getElementById("table").innerHTML = data.table;
+
+        } catch (err) {
+            alert("Error crítico en la comunicación con el servidor: " + err);
+            console.error(err);
+        }
+    });
 });
 </script>
 
