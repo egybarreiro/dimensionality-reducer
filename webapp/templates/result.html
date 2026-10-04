@@ -2,44 +2,42 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>DimRed APP</title>
+    <title>Resultados - DimRed APP</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
+
 <body>
 <div class="layout">
+
     <header class="header">
-        <div class="logo">DimRed APP</div>
-        <div class="subtitle">Dashboard de reducción de dimensionalidad</div>
+        <div class="logo">Resultados</div>
+        <div class="subtitle">Visualizaciones y estadísticas</div>
     </header>
 
     <main class="main">
+
         <section class="card">
-            <h2>Configurar experimento</h2>
-
-            <form action="/process" method="post" enctype="multipart/form-data">
-                <div class="form-group">
-                    <label>Archivo CSV:</label>
-                    <input type="file" name="file" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Método de reducción:</label>
-                    <select name="method">
-                        <option value="pca">PCA</option>
-                        <option value="tsne">t-SNE</option>
-                        <option value="umap">UMAP</option>
-                        <option value="lda">LDA</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label><input type="checkbox" name="normalize"> Normalizar datos</label>
-                </div>
-
-                <button type="submit" class="button primary">Ejecutar</button>
-            </form>
+            <h2>Gráfico de correlación</h2>
+            <img src="data:image/png;base64,{{ corr_plot }}" alt="Correlation Heatmap">
         </section>
+
+        <section class="card">
+            <h2>Comparativo de columnas</h2>
+            <img src="data:image/png;base64,{{ compare_plot }}" alt="Column Comparison">
+        </section>
+
+        <section class="card">
+            <h2>Estadísticas</h2>
+            <div>{{ stats|safe }}</div>
+        </section>
+
+        <section class="card">
+            <h2>Tabla (primeras 20 filas)</h2>
+            <div>{{ table|safe }}</div>
+        </section>
+
     </main>
+
 </div>
 </body>
 </html>

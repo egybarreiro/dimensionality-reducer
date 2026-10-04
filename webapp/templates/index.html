@@ -5,41 +5,99 @@
     <title>DimRed APP</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
+
 <body>
 <div class="layout">
+
     <header class="header">
         <div class="logo">DimRed APP</div>
         <div class="subtitle">Dashboard de reducción de dimensionalidad</div>
     </header>
 
     <main class="main">
+
         <section class="card">
             <h2>Configurar experimento</h2>
 
-            <form action="/process" method="post" enctype="multipart/form-data">
+            <form id="upload-form" enctype="multipart/form-data">
                 <div class="form-group">
                     <label>Archivo CSV:</label>
-                    <input type="file" name="file" required>
+                    <input type="file" name="file" id="file-input" required>
                 </div>
 
                 <div class="form-group">
                     <label>Método de reducción:</label>
-                    <select name="method">
+                    <select name="method" id="method-select">
                         <option value="pca">PCA</option>
                         <option value="tsne">t-SNE</option>
                         <option value="umap">UMAP</option>
-                        <option value="lda">LDA</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label><input type="checkbox" name="normalize"> Normalizar datos</label>
+                    <label>
+                        <input type="checkbox" id="normalize-checkbox">
+                        Normalizar datos
+                    </label>
                 </div>
 
                 <button type="submit" class="button primary">Ejecutar</button>
             </form>
         </section>
+
+        <section class="card" id="results" style="display:none;">
+            <h2>Resultados</h2>
+
+            <h3>Gráfico de correlación</h3>
+            <img id="corr-img" />
+
+            <h3>Comparativo de columnas</h3>
+            <img id="compare-img" />
+
+            <h3>Estadísticas</h3>
+            <div id="stats"></div>
+
+            <h3>Tabla (primeras 20 filas)</h3>
+            <div id="table"></div>
+        </section>
+
     </main>
 </div>
+
+<script>
+document.getElementById("upload-form").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const fileInput = document.getElementById("file-input");
+    const method = document.getElementById("method-select").value;
+    const normalize = document.getElementById("normalize-checkbox").checked;
+
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+    formData.append("method", method);
+    formData.append("normalize", normalize ? "true" : "false");
+
+    const response = await fetch("/process", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+        alert("Error: " + data.error);
+        return;
+    }
+
+    document.getElementById("results").style.display = "block";
+
+    document.getElementById("corr-img").src = "data:image/png;base64," + data.corr_plot;
+    document.getElementById("compare-img").src = "data:image/png;base64," + data.compare_plot;
+
+    document.getElementById("stats").innerHTML = data.stats;
+    document.getElementById("table").innerHTML = data.table;
+});
+</script>
+
 </body>
 </html>

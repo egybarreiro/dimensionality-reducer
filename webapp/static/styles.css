@@ -1,117 +1,107 @@
+/* ============================
+   ESTILOS GENERALES
+============================ */
+
 body {
     margin: 0;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #050814;
-    color: #ffffff;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f4f4;
+    color: #333;
 }
 
 .layout {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
+    max-width: 1100px;
+    margin: auto;
+    padding: 20px;
 }
 
+/* ============================
+   HEADER
+============================ */
+
 .header {
-    padding: 16px 32px;
-    background: linear-gradient(90deg, #141b3a, #3b1f5f);
-    border-bottom: 1px solid #262b4a;
+    text-align: center;
+    padding: 20px 0;
 }
 
 .logo {
-    font-size: 22px;
-    font-weight: 700;
+    font-size: 32px;
+    font-weight: bold;
+    color: #2c3e50;
 }
 
 .subtitle {
-    font-size: 14px;
-    opacity: 0.8;
+    font-size: 16px;
+    color: #7f8c8d;
 }
 
-.main {
-    flex: 1;
-    padding: 24px 32px;
-}
-
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 16px;
-}
+/* ============================
+   CARD
+============================ */
 
 .card {
-    background: #0b1020;
-    border-radius: 8px;
-    padding: 16px;
-    border: 1px solid #1c2340;
-    box-shadow: 0 0 12px rgba(0,0,0,0.4);
+    background: white;
+    padding: 25px;
+    margin-top: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
-.card.wide {
-    grid-column: 1 / -1;
+.card h2 {
+    margin-top: 0;
 }
+
+/* ============================
+   FORMULARIO
+============================ */
 
 .form-group {
-    margin-bottom: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+    margin-bottom: 15px;
+}
+
+label {
+    font-weight: bold;
 }
 
 input[type="file"],
-select {
-    padding: 6px 8px;
-    border-radius: 4px;
-    border: 1px solid #303854;
-    background: #050814;
-    color: #ffffff;
+select,
+input[type="checkbox"] {
+    margin-top: 5px;
 }
 
 .button {
-    display: inline-block;
-    padding: 8px 16px;
-    border-radius: 4px;
+    padding: 10px 20px;
+    border: none;
     cursor: pointer;
-    text-decoration: none;
-    font-weight: 600;
+    font-weight: bold;
+    border-radius: 5px;
 }
 
 .button.primary {
-    background: #6c5ce7;
-    color: #ffffff;
+    background: #3498db;
+    color: white;
 }
 
-.button.secondary {
-    background: #00cec9;
-    color: #050814;
+.button.primary:hover {
+    background: #2980b9;
 }
 
-.plot {
-    width: 100%;
-    height: 320px;
-}
+/* ============================
+   RESULTADOS
+============================ */
 
-.plot-img {
+#results img {
     max-width: 100%;
-    border-radius: 4px;
-    border: 1px solid #303854;
+    margin-bottom: 20px;
+    border-radius: 8px;
 }
 
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 8px;
-    font-size: 13px;
-}
-
-.table th, .table td {
-    border: 1px solid #303854;
-    padding: 4px 8px;
-}
-
-.stats {
-    list-style: none;
-    padding-left: 0;
-}
-.stats li {
-    margin-bottom: 4px;
+#stats,
+#table {
+    background: #fafafa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    overflow-x: auto;
 }

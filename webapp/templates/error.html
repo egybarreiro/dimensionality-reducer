@@ -1,19 +1,37 @@
 ﻿<!DOCTYPE html>
-<html lang='es'>
+<html lang="es">
 <head>
-    <meta charset='UTF-8'>
-    <title>Error</title>
-    <link rel='stylesheet' href='{{ url_for("static", filename="styles.css") }}'>
+    <meta charset="UTF-8">
+    <title>Error - DimRed APP</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
+
 <body>
+<div class="layout">
 
-<div class='container'>
-    <h1>Error</h1>
+    <header class="header">
+        <div class="logo">DimRed APP</div>
+        <div class="subtitle">Se produjo un error durante el procesamiento</div>
+    </header>
 
-    <p>{{ message }}</p>
+    <main class="main">
 
-    <a href='/' class='button'>Volver</a>
+        <section class="card">
+            <h2>Error</h2>
+
+            <p style="font-size: 18px; color: #c0392b; font-weight: bold;">
+                {{ error_message }}
+            </p>
+
+            <p>
+                Verifica tu archivo CSV, el método seleccionado y vuelve a intentarlo.
+            </p>
+
+            <a href="/" class="button primary">Volver al inicio</a>
+        </section>
+
+    </main>
+
 </div>
-
 </body>
 </html>
