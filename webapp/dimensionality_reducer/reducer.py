@@ -38,7 +38,7 @@ def fig_to_base64(fig):
 
 
 # ============================
-# PCA
+# PCA (Railway Safe)
 # ============================
 
 def run_pca(df):
@@ -47,17 +47,23 @@ def run_pca(df):
     pca = PCA(n_components=3)
     embedding = pca.fit_transform(X)
 
-    # ====== Gráfico de correlación ======
-    fig1, ax1 = plt.subplots(figsize=(6, 5))
-    sns.heatmap(df.corr(), cmap="coolwarm", ax=ax1)
-    corr_plot = fig_to_base64(fig1)
-    plt.close(fig1)
+    # ====== Gráfico de correlación (solo si columnas <= 30) ======
+    if df.shape[1] <= 30:
+        fig1, ax1 = plt.subplots(figsize=(6, 5))
+        sns.heatmap(df.corr(), cmap="coolwarm", ax=ax1)
+        corr_plot = fig_to_base64(fig1)
+        plt.close(fig1)
+    else:
+        corr_plot = ""
 
-    # ====== Gráfico comparativo ======
-    fig2, ax2 = plt.subplots(figsize=(6, 5))
-    df.iloc[:, :5].plot(kind="line", ax=ax2)
-    compare_plot = fig_to_base64(fig2)
-    plt.close(fig2)
+    # ====== Gráfico comparativo (solo si columnas >= 5) ======
+    if df.shape[1] >= 5:
+        fig2, ax2 = plt.subplots(figsize=(6, 5))
+        df.iloc[:, :5].plot(kind="line", ax=ax2)
+        compare_plot = fig_to_base64(fig2)
+        plt.close(fig2)
+    else:
+        compare_plot = ""
 
     # ====== Estadísticas ======
     stats_html = df.describe().to_html()
