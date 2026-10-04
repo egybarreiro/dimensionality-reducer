@@ -1,11 +1,8 @@
 ﻿import os
-import sys
-from pathlib import Path
-
 import pandas as pd
 from flask import Flask, render_template, request
 
-# Import directo del reducer (sin loader dinámico)
+# Import directo del reducer
 from webapp.dimensionality_reducer.reducer import run_reducer
 
 # -----------------------------
@@ -13,8 +10,8 @@ from webapp.dimensionality_reducer.reducer import run_reducer
 # -----------------------------
 app = Flask(
     __name__,
-    static_folder="static",
-    template_folder="templates"
+    static_folder="webapp/static",
+    template_folder="webapp/templates"
 )
 
 # -----------------------------
@@ -36,6 +33,9 @@ def process():
         if not file:
             return render_template("error.html", message="No file uploaded")
 
+        # Normalizar método (evita error: "Unknown reduction method: PCA")
+        method = method.lower().strip()
+
         # Leer CSV
         df = pd.read_csv(file.stream)
 
@@ -45,12 +45,11 @@ def process():
         # Eliminar filas con NaN
         df = df.dropna()
 
-        # Limitar filas para Render Free
+        # Limitar filas para Railway Free
         MAX_ROWS = 1000
         if len(df) > MAX_ROWS:
             df = df.sample(MAX_ROWS, random_state=42)
 
-        # Debug: shape final
         print("SHAPE FINAL:", df.shape)
 
         # Ejecutar el reducer
@@ -63,7 +62,7 @@ def process():
         return render_template("error.html", message=str(e))
 
 # -----------------------------
-# Render Free compatible server
+# Servidor compatible con Railway
 # -----------------------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

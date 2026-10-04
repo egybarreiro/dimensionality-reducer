@@ -1,20 +1,60 @@
+# -----------------------------
 # Python cache
+# -----------------------------
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
 
-# Virtual environment
+# -----------------------------
+# Virtual environments
+# -----------------------------
 .venv/
+venv/
+env/
 
-# Data folders (raw or generated)
-data/
-dimensionality_reducer_proyect/data/
-
-# CSV outputs
-*.csv
-
-# Streamlit cache
-streamlit_app/__pycache__/
-
+# -----------------------------
 # OS junk
+# -----------------------------
 .DS_Store
 Thumbs.db
+
+# -----------------------------
+# Data folders (raw or generated)
+# -----------------------------
+data/
+webapp/data/
+dimensionality_reducer_proyect/data/
+
+# -----------------------------
+# CSV outputs (no subir datasets)
+# -----------------------------
+*.csv
+
+# -----------------------------
+# Streamlit cache (si aplica)
+# -----------------------------
+streamlit_app/__pycache__/
+streamlit_app/.streamlit/
+
+# -----------------------------
+# Jupyter notebooks cache
+# -----------------------------
+.ipynb_checkpoints/
+
+# -----------------------------
+# Build artifacts
+# -----------------------------
+dist/
+build/
+
+# -----------------------------
+# Logs
+# -----------------------------
+*.log
+
+# -----------------------------
+# IDE / Editor configs
+# -----------------------------
+.vscode/
+.idea/
