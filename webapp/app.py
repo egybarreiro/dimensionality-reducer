@@ -1,9 +1,14 @@
 ﻿import os
+from importlib import import_module
+
 import pandas as pd
 from flask import Flask, render_template, request
 
-# Import directo del reducer
-from webapp.dimensionality_reducer.reducer import run_reducer
+# Import directo del reducer con fallback para ejecución como script o como paquete
+try:
+    run_reducer = import_module("webapp.dimensionality_reducer.reducer").run_reducer
+except ModuleNotFoundError:  # pragma: no cover
+    run_reducer = import_module("dimensionality_reducer.reducer").run_reducer
 
 # -----------------------------
 # Configurar Flask correctamente
@@ -34,7 +39,7 @@ def process():
             return render_template("error.html", message="No file uploaded")
 
         # Normalizar método (evita error: "Unknown reduction method: PCA")
-        method = method.lower().strip()
+        method = (method or "").lower().strip()
 
         # Leer CSV
         df = pd.read_csv(file.stream)

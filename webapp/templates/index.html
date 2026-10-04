@@ -7,24 +7,25 @@
 </head>
 
 <body>
+
     <div class="container">
 
-        <header>
+        <header class="header">
             <img src="/static/dimred-logo.png" alt="DimRed Logo" class="logo">
             <h1>DimRed APP</h1>
+            <p class="subtitle">Visualiza PCA, t‑SNE, UMAP y LDA con un solo clic</p>
         </header>
 
         <section class="form-section">
             <h2>Reducción de Dimensionalidad</h2>
 
-            <!-- FORMULARIO CORREGIDO -->
             <form action="/process" method="POST" enctype="multipart/form-data">
 
                 <label for="file">Archivo CSV:</label>
-                <input type="file" id="file" name="file" required>
+                <input type="file" id="file" name="file" required class="input-file">
 
                 <label for="method">Método de Reducción:</label>
-                <select id="method" name="method">
+                <select id="method" name="method" class="select-method">
                     <option value="PCA">PCA</option>
                     <option value="TSNE">t-SNE</option>
                     <option value="UMAP">UMAP</option>
@@ -41,5 +42,6 @@
         </section>
 
     </div>
+
 </body>
 </html>
