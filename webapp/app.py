@@ -8,7 +8,14 @@ from flask import Flask, render_template, request
 # Import directo del reducer (sin loader dinámico)
 from webapp.dimensionality_reducer.reducer import run_reducer
 
-app = Flask(__name__)
+# -----------------------------
+# Configurar Flask correctamente
+# -----------------------------
+app = Flask(
+    __name__,
+    static_folder="static",
+    template_folder="templates"
+)
 
 # -----------------------------
 # Página principal
@@ -16,7 +23,6 @@ app = Flask(__name__)
 @app.route("/", methods=["GET"])
 def index():
     return render_template("index.html")
-
 
 # -----------------------------
 # Procesar CSV y ejecutar reducer
@@ -55,7 +61,6 @@ def process():
 
     except (pd.errors.ParserError, UnicodeDecodeError, ValueError) as e:
         return render_template("error.html", message=str(e))
-
 
 # -----------------------------
 # Render Free compatible server
