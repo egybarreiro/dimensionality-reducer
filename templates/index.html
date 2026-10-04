@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>DimRed APP</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='dimred_dark.css') }}">
+</head>
+
+<body>
+<div class="layout">
+
+    <header class="header">
+        <img src="{{ url_for('static', filename='dimred-logo.png') }}" alt="Logo">
+        <div class="logo">DimRed APP</div>
+        <div class="subtitle">Dashboard de reducción de dimensionalidad</div>
+    </header>
+
+    <main class="main">
+
+        <section class="card">
+            <h2>Configurar experimento</h2>
+
+            <form id="upload-form" enctype="multipart/form-data">
+
+                <div class="form-group">
+                    <label>Archivo CSV:</label>
+                    <input type="file" name="file" id="file-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Método de reducción:</label>
+                    <select name="method" id="method-select">
+                        <option value="pca">PCA</option>
+                        <option value="tsne">t-SNE</option>
+                        <option value="umap">UMAP</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="normalize-checkbox">
+                        Normalizar datos
+                    </label>
+                </div>
+
+                <button type="submit" class="button primary" id="run-btn">
+                    Ejecutar
+                </button>
+
+            </form>
+        </section>
+
+        <section class="card" id="results" style="display:none;">
+            <h2>Resultados</h2>
+
+            <h3>Gráfico de correlación</h3>
+            <img id="corr-img" />
+
+            <h3>Comparativo de columnas</h3>
+            <img id="compare-img" />
+
+            <h3>Estadísticas</h3>
+            <div id="stats"></div>
+
+            <h3>Tabla (primeras 20 filas)</h3>
+            <div id="table"></div>
+        </section>
+
+    </main>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const form = document.getElementById("upload-form");
+    const fileInput = document.getElementById("file-input");
+    const methodSelect = document.getElementById("method-select");
+    const normalizeCheckbox = document.getElementById("normalize-checkbox");
+
+    form.addEventListener("submit", async function(e) {
+        e.preventDefault();
+
+        if (!fileInput.files.length) {
+            alert("Selecciona un archivo CSV primero.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", fileInput.files[0]);
+        formData.append("method", methodSelect.value);
+        formData.append("normalize", normalizeCheckbox.checked ? "true" : "false");
+
+        try {
+            const response = await fetch("/process", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                alert("Error: " + data.error);
+                return;
+            }
+
+            document.getElementById("results").style.display = "block";
+
+            document.getElementById("corr-img").src =
+                "data:image/png;base64," + data.corr_plot;
+
+            document.getElementById("compare-img").src =
+                "data:image/png;base64," + data.compare_plot;
+
+            document.getElementById("stats").innerHTML = data.stats;
+            document.getElementById("table").innerHTML = data.table;
+
+        } catch (err) {
+            alert("Error crítico en la comunicación con el servidor: " + err);
+            console.error(err);
+        }
+    });
+});
+</script>
+
+</body>
+</html>
