@@ -3,232 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <title>DimRed APP</title>
-
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #1e1e2f, #3a3a5c);
-            color: #ffffff;
-            text-align: center;
-        }
-
-        .container {
-            width: 60%;
-            margin: auto;
-            background: rgba(255, 255, 255, 0.08);
-            padding: 30px;
-            border-radius: 15px;
-            margin-top: 40px;
-            box-shadow: 0px 0px 20px rgba(0,0,0,0.4);
-        }
-
-        h1 {
-            font-size: 40px;
-            margin-bottom: 10px;
-        }
-
-        img.logo {
-            width: 150px;
-            margin-bottom: 25px;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%   { transform: translateY(0px); }
-            50%  { transform: translateY(-8px); }
-            100% { transform: translateY(0px); }
-        }
-
-        label {
-            font-size: 18px;
-            display: block;
-            margin-top: 15px;
-        }
-
-        input, select {
-            padding: 10px;
-            width: 80%;
-            border-radius: 8px;
-            border: none;
-            margin-top: 10px;
-        }
-
-        button {
-            margin-top: 25px;
-            padding: 12px 25px;
-            background-color: #4CAF50;
-            border: none;
-            border-radius: 8px;
-            color: white;
-            font-size: 18px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #45a049;
-        }
-
-        .result img {
-            width: 80%;
-            border-radius: 10px;
-            box-shadow: 0px 0px 15px rgba(0,0,0,0.5);
-        }
-
-        .download-buttons a {
-            display: inline-block;
-            margin: 10px;
-            padding: 10px 20px;
-            background: #2196F3;
-            color: white;
-            border-radius: 8px;
-            text-decoration: none;
-        }
-
-        .download-buttons a:hover {
-            background: #1976D2;
-        }
-
-        /* Loading overlay */
-        #loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            z-index: 9999;
-        }
-
-        .spinner {
-            border: 8px solid #f3f3f3;
-            border-top: 8px solid #4CAF50;
-            border-radius: 50%;
-            width: 70px;
-            height: 70px;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Historial */
-        table.history-table {
-            width: 90%;
-            margin: 20px auto;
-            border-collapse: collapse;
-            background: rgba(255,255,255,0.1);
-        }
-
-        table.history-table th, table.history-table td {
-            padding: 10px;
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-
-        table.history-table th {
-            background: rgba(255,255,255,0.2);
-        }
-    </style>
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 
 <body>
-
-    <div id="loading-overlay">
-        <div class="spinner"></div>
-        <p style="margin-top:20px;font-size:20px;">Procesando reducción de dimensionalidad...</p>
-    </div>
-
     <div class="container">
-        <img src="/static/dimred-logo.png" class="logo" alt="DimRed Logo">
 
-        <h1>DimRed APP</h1>
+        <header>
+            <img src="/static/dimred-logo.png" alt="DimRed Logo" class="logo">
+            <h1>DimRed APP</h1>
+        </header>
 
-        {% if error %}
-            <p style="color: #ff8080;">{{ error }}</p>
-        {% endif %}
+        <section class="form-section">
+            <h2>Reducción de Dimensionalidad</h2>
 
-        {% if elapsed %}
-            <p style="color:#80ff80;">Tiempo de ejecución: {{ elapsed }} segundos</p>
-        {% endif %}
+            <!-- FORMULARIO CORREGIDO -->
+            <form action="/process" method="POST" enctype="multipart/form-data">
 
-        <form method="POST" enctype="multipart/form-data">
-            <label>Archivo CSV:</label>
-            <input type="file" name="file" required>
+                <label for="file">Archivo CSV:</label>
+                <input type="file" id="file" name="file" required>
 
-            <label>Método de Reducción:</label>
-            <select name="method">
-                <option value="pca">PCA</option>
-                <option value="tsne">t-SNE</option>
-                <option value="umap">UMAP</option>
-                <option value="lda">LDA</option>
-            </select>
+                <label for="method">Método de Reducción:</label>
+                <select id="method" name="method">
+                    <option value="PCA">PCA</option>
+                    <option value="TSNE">t-SNE</option>
+                    <option value="UMAP">UMAP</option>
+                    <option value="LDA">LDA</option>
+                </select>
 
-            <label>
-                <input type="checkbox" name="normalize"> Normalizar datos
-            </label>
+                <div class="checkbox">
+                    <input type="checkbox" id="normalize" name="normalize">
+                    <label for="normalize">Normalizar datos</label>
+                </div>
 
-            <button type="submit">Procesar</button>
-        </form>
+                <button type="submit" class="btn">Procesar</button>
+            </form>
+        </section>
 
-        {% if image %}
-            <div class="result">
-                <h2>Resultado:</h2>
-                <img src="{{ image }}" alt="Resultado">
-            </div>
-
-            <div class="download-buttons">
-                <a href="/download/image">Descargar imagen</a>
-                {% if csv_available %}
-                    <a href="/download/csv">Descargar CSV reducido</a>
-                {% endif %}
-            </div>
-        {% endif %}
-
-        {% if table %}
-            <div class="result">
-                <h2>Tabla Reducida (primeras filas)</h2>
-                <img src="{{ table }}" alt="Tabla">
-            </div>
-        {% endif %}
-
-        {% if history %}
-            <h2>Historial de ejecuciones</h2>
-            <table class="history-table">
-                <tr>
-                    <th>Fecha</th>
-                    <th>Archivo</th>
-                    <th>Método</th>
-                    <th>Normalizado</th>
-                    <th>Tiempo (s)</th>
-                </tr>
-                {% for item in history %}
-                <tr>
-                    <td>{{ item.timestamp }}</td>
-                    <td>{{ item.filename }}</td>
-                    <td>{{ item.method }}</td>
-                    <td>{{ item.normalize }}</td>
-                    <td>{{ item.time }}</td>
-                </tr>
-                {% endfor %}
-            </table>
-        {% endif %}
     </div>
-
-    <script>
-        const form = document.querySelector("form");
-        const overlay = document.getElementById("loading-overlay");
-
-        form.addEventListener("submit", () => {
-            overlay.style.display = "flex";
-        });
-    </script>
-
 </body>
 </html>
