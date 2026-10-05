@@ -1,9 +1,4 @@
 
----
-
-# ⭐ REQUIREMENTS.TXT FINAL
-
-```txt
 numpy
 pandas
 scikit-learn
