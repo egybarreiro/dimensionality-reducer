@@ -12,7 +12,7 @@
     <header class="header">
         <img src="{{ url_for('static', filename='dimred-logo.png') }}" alt="Logo">
         <div class="logo">DimRed APP</div>
-        <div class="subtitle">Dashboard de reducci髇 de dimensionalidad</div>
+        <div class="subtitle">Dashboard de reducci贸n de dimensionalidad</div>
     </header>
 
     <main class="main">
@@ -28,7 +28,7 @@
                 </div>
 
                 <div class="form-group">
-                    <label>M閠odo de reducci髇:</label>
+                    <label>M茅todo de reducci贸n:</label>
                     <select name="method" id="method-select">
                         <option value="pca">PCA</option>
                         <option value="tsne">t-SNE</option>
@@ -53,13 +53,13 @@
         <section class="card" id="results" style="display:none;">
             <h2>Resultados</h2>
 
-            <h3>Gr醘ico de correlaci髇</h3>
+            <h3>Gr谩fico de correlaci贸n</h3>
             <img id="corr-img" style="display:none;" />
 
             <h3>Comparativo de columnas</h3>
             <img id="compare-img" style="display:none;" />
 
-            <h3>Estad韘ticas</h3>
+            <h3>Estad铆sticas</h3>
             <div id="stats"></div>
 
             <h3>Tabla (primeras 20 filas)</h3>
@@ -105,14 +105,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
             document.getElementById("results").style.display = "block";
 
-            // Mostrar correlaci髇 solo si existe
             if (data.corr_plot && data.corr_plot.length > 0) {
                 const corrImg = document.getElementById("corr-img");
                 corrImg.src = "data:image/png;base64," + data.corr_plot;
                 corrImg.style.display = "block";
             }
 
-            // Mostrar comparativo solo si existe
             if (data.compare_plot && data.compare_plot.length > 0) {
                 const cmpImg = document.getElementById("compare-img");
                 cmpImg.src = "data:image/png;base64," + data.compare_plot;
@@ -123,7 +121,7 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById("table").innerHTML = data.table;
 
         } catch (err) {
-            alert("Error cr韙ico en la comunicaci髇 con el servidor: " + err);
+            alert("Error cr铆tico en la comunicaci贸n con el servidor: " + err);
             console.error(err);
         }
     });
