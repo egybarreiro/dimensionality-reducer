@@ -1,51 +1,42 @@
-﻿from flask import Flask, render_template, request, jsonify
+﻿from flask import Flask, render_template, request, jsonify, send_from_directory
 import pandas as pd
-import numpy as np
-
+import os
 from webapp.dimensionality_reducer.reducer import run_reducer
 
 app = Flask(__name__)
-
-# ============================
-# RUTA PRINCIPAL
-# ============================
 
 @app.route("/")
 def index():
     return render_template("index.html")
 
-# ============================
-# PROCESAR ARCHIVO Y MÉTODO
-# ============================
-
 @app.route("/process", methods=["POST"])
 def process():
     try:
-        # Archivo CSV
-        file = request.files.get("file")
-        if file is None:
-            return jsonify({"error": "No se envió archivo"}), 400
+        file = request.files["file"]
+        method = request.form["method"]
 
-        # Método seleccionado: pca, tsne, umap
-        method = request.form.get("method")
-        if method not in ["pca", "tsne", "umap"]:
-            return jsonify({"error": "Método inválido"}), 400
-
-        # Leer CSV
-        df = pd.read_csv(file.stream)
-
-        # Ejecutar reducción
+        df = pd.read_csv(file)
         result = run_reducer(df, method)
 
-        # Responder JSON
         return jsonify(result)
 
-    except (ValueError, pd.errors.ParserError) as e:
-        return jsonify({"error": str(e)}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
-# ============================
-# EJECUTAR SERVIDOR
-# ============================
+@app.route("/download/csv/<name>")
+def download_csv(name):
+    return send_from_directory("static", name, as_attachment=True)
+
+@app.route("/download/image/<name>")
+def download_image(name):
+    return send_from_directory("static", name, as_attachment=True)
+
+@app.route("/history")
+def history():
+    if os.path.exists("webapp/history.json"):
+        with open("webapp/history.json", "r") as f:
+            return jsonify({"history": f.read()})
+    return jsonify({"history": "[]"})
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    app.run(host="0.0.0.0", port=5000)

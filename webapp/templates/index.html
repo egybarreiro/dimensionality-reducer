@@ -4,13 +4,31 @@
     <meta charset="UTF-8">
     <title>DimRed APP</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='dimred_dark.css') }}">
+    <style>
+        /* Animación del logo */
+        .logo-animated {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%   { transform: scale(1);   opacity: 1; }
+            50%  { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1);   opacity: 1; }
+        }
+
+        /* Spinner */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 
 <body>
 <div class="layout">
 
     <header class="header">
-        <img src="{{ url_for('static', filename='dimred-logo.png') }}" alt="Logo">
+        <img src="{{ url_for('static', filename='dimred-logo.png') }}" alt="Logo" class="logo-animated">
         <div class="logo">DimRed APP</div>
         <div class="subtitle">Dashboard de reducción de dimensionalidad</div>
     </header>
@@ -33,6 +51,7 @@
                         <option value="pca">PCA</option>
                         <option value="tsne">t-SNE</option>
                         <option value="umap">UMAP</option>
+                        <option value="lda">LDA</option>
                     </select>
                 </div>
 
@@ -56,8 +75,17 @@
             <h3>Gráfico de correlación</h3>
             <img id="corr-img" style="display:none;" />
 
-            <h3>Comparativo de columnas</h3>
+            <h3>Comparativo de columnas / clusters</h3>
             <img id="compare-img" style="display:none;" />
+
+            <div class="actions">
+                <button id="download-csv-btn" class="button secondary" style="display:none;">
+                    Descargar CSV reducido
+                </button>
+                <button id="download-img-btn" class="button secondary" style="display:none;">
+                    Descargar imagen de clusters
+                </button>
+            </div>
 
             <h3>Estadísticas</h3>
             <div id="stats"></div>
@@ -66,16 +94,98 @@
             <div id="table"></div>
         </section>
 
+        <section class="card" id="history-card">
+            <h2>Historial de ejecuciones</h2>
+            <div id="history"></div>
+        </section>
+
     </main>
 </div>
 
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" style="
+    display:none;
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background:rgba(0,0,0,0.75);
+    z-index:9999;
+    color:white;
+    text-align:center;
+    padding-top:20%;
+    font-size:24px;
+">
+    <div class="spinner" style="
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid #3498db;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 20px auto;
+    "></div>
+    Procesando... por favor espere
+</div>
+
 <script>
+function showLoading() {
+    document.getElementById("loadingOverlay").style.display = "block";
+}
+
+function hideLoading() {
+    document.getElementById("loadingOverlay").style.display = "none";
+}
+
+async function loadHistory() {
+    try {
+        const resp = await fetch("/history");
+        const data = await resp.json();
+
+        let historyArr = [];
+        try {
+            historyArr = JSON.parse(data.history);
+        } catch (e) {
+            historyArr = [];
+        }
+
+        const historyDiv = document.getElementById("history");
+        if (!historyArr.length) {
+            historyDiv.innerHTML = "<p>No hay ejecuciones registradas aún.</p>";
+            return;
+        }
+
+        let html = "<table><tr><th>Fecha</th><th>Método</th><th>CSV</th><th>Imagen</th></tr>";
+        historyArr.forEach(item => {
+            html += `<tr>
+                        <td>${item.timestamp}</td>
+                        <td>${item.method}</td>
+                        <td><a href="/download/csv/${item.csv}" target="_blank">${item.csv}</a></td>
+                        <td><a href="/download/image/${item.image}" target="_blank">${item.image}</a></td>
+                     </tr>`;
+        });
+        html += "</table>";
+        historyDiv.innerHTML = html;
+
+    } catch (err) {
+        console.error("Error cargando historial:", err);
+        document.getElementById("history").innerHTML = "<p>Error cargando historial.</p>";
+    }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
 
     const form = document.getElementById("upload-form");
     const fileInput = document.getElementById("file-input");
     const methodSelect = document.getElementById("method-select");
     const normalizeCheckbox = document.getElementById("normalize-checkbox");
+
+    const downloadCsvBtn = document.getElementById("download-csv-btn");
+    const downloadImgBtn = document.getElementById("download-img-btn");
+
+    let lastCsvName = null;
+    let lastImgName = null;
+
+    loadHistory();
 
     form.addEventListener("submit", async function(e) {
         e.preventDefault();
@@ -84,6 +194,8 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Selecciona un archivo CSV primero.");
             return;
         }
+
+        showLoading();
 
         const formData = new FormData();
         formData.append("file", fileInput.files[0]);
@@ -98,6 +210,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const data = await response.json();
 
+            hideLoading();
+
             if (data.error) {
                 alert("Error: " + data.error);
                 return;
@@ -109,6 +223,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 const corrImg = document.getElementById("corr-img");
                 corrImg.src = "data:image/png;base64," + data.corr_plot;
                 corrImg.style.display = "block";
+            } else {
+                document.getElementById("corr-img").style.display = "none";
             }
 
             if (data.compare_plot && data.compare_plot.length > 0) {
@@ -120,10 +236,46 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById("stats").innerHTML = data.stats;
             document.getElementById("table").innerHTML = data.table;
 
+            // Inferir nombres de archivos según método
+            const method = methodSelect.value;
+            if (method === "pca") {
+                lastCsvName = "pca_reduced.csv";
+                lastImgName = "pca_plot.png";
+            } else if (method === "tsne") {
+                lastCsvName = "tsne_reduced.csv";
+                lastImgName = "tsne_plot.png";
+            } else if (method === "umap") {
+                lastCsvName = "umap_reduced.csv";
+                lastImgName = "umap_plot.png";
+            } else if (method === "lda") {
+                lastCsvName = "lda_reduced.csv";
+                lastImgName = "lda_plot.png";
+            }
+
+            if (lastCsvName) {
+                downloadCsvBtn.style.display = "inline-block";
+            }
+            if (lastImgName) {
+                downloadImgBtn.style.display = "inline-block";
+            }
+
+            loadHistory();
+
         } catch (err) {
+            hideLoading();
             alert("Error crítico en la comunicación con el servidor: " + err);
             console.error(err);
         }
+    });
+
+    downloadCsvBtn.addEventListener("click", function() {
+        if (!lastCsvName) return;
+        window.open("/download/csv/" + lastCsvName, "_blank");
+    });
+
+    downloadImgBtn.addEventListener("click", function() {
+        if (!lastImgName) return;
+        window.open("/download/image/" + lastImgName, "_blank");
     });
 });
 </script>

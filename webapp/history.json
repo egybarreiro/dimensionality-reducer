@@ -1,0 +1,8 @@
+[
+    {
+        "timestamp": "2026-10-05 15:38:01.878570",
+        "method": "PCA",
+        "csv": "pca_reduced.csv",
+        "image": "pca_plot.png"
+    }
+]
