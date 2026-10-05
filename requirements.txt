@@ -1,8 +1,14 @@
-Flask
-pandas
+
+---
+
+# ⭐ REQUIREMENTS.TXT FINAL
+
+```txt
 numpy
+pandas
+scikit-learn
 matplotlib
 seaborn
-scikit-learn
 umap-learn
+flask
 gunicorn
