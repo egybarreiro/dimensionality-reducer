@@ -3,13 +3,20 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 from xgboost import XGBRegressor
+import os
 
 router = APIRouter(
     prefix="",
     tags=["model"]
 )
 
-MODEL_PATH = "backend/colab/model_return_1d.json"
+# ============================
+# RUTA CORRECTA DEL MODELO
+# ============================
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "..", "colab", "model_return_1d.json")
+MODEL_PATH = os.path.normpath(MODEL_PATH)
 
 
 # ============================
@@ -37,18 +44,12 @@ def compute_features(df: pd.DataFrame) -> np.ndarray | None:
         df = df.copy()
         df = df.sort_values("Date")
 
-        # Features base
         df["return_1d"] = df["Close"].pct_change(1)
         df["return_5d"] = df["Close"].pct_change(5)
         df["sma_20"] = df["Close"].rolling(20).mean()
         df["ema_50"] = df["Close"].ewm(span=50).mean()
         df["vol_20"] = df["return_1d"].rolling(20).std()
 
-        # ============================
-        # INDICADORES TÉCNICOS AVANZADOS
-        # ============================
-
-        # RSI 14
         delta = df["Close"].diff()
         gain = delta.clip(lower=0)
         loss = -delta.clip(upper=0)
@@ -57,13 +58,11 @@ def compute_features(df: pd.DataFrame) -> np.ndarray | None:
         rs = avg_gain / avg_loss
         df["rsi_14"] = 100 - (100 / (1 + rs))
 
-        # MACD
         ema12 = df["Close"].ewm(span=12).mean()
         ema26 = df["Close"].ewm(span=26).mean()
         df["macd"] = ema12 - ema26
         df["signal_macd"] = df["macd"].ewm(span=9).mean()
 
-        # Momentum
         df["momentum_10"] = df["Close"].pct_change(10)
 
         df = df.dropna()
@@ -163,7 +162,6 @@ async def analyze_ticker(ticker: str):
         last_close = float(df["Close"].iloc[-1])
         future_price = last_close * (1 + pred)
 
-        # Indicadores técnicos
         rsi_14 = float(df["rsi_14"].iloc[-1])
         macd = float(df["macd"].iloc[-1])
         signal_macd = float(df["signal_macd"].iloc[-1])
@@ -181,8 +179,6 @@ async def analyze_ticker(ticker: str):
             "ema_50": ema_50,
             "prediction_return_1d": pred,
             "signal": signal,
-
-            # Indicadores avanzados
             "rsi_14": rsi_14,
             "macd": macd,
             "signal_macd": signal_macd,
